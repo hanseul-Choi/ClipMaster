@@ -19,3 +19,4 @@ dependencyResolutionManagement {
 rootProject.name = "ClipMaster"
 include(":app")
 include("core:data")
+include(":core:model")
