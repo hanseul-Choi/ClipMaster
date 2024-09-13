@@ -13,7 +13,7 @@ internal fun Project.configureKotlinAndroid(
         compileSdk = 34
 
         defaultConfig {
-            minSdk = 21 // targetSdk는 conventionPlugin에 존재
+            minSdk = 26 // targetSdk는 conventionPlugin에 존재
         }
 
         compileOptions {
