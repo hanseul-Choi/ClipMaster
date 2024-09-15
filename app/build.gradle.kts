@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.clipmaster.android.application.compose)
+    alias(libs.plugins.clipmaster.android.hilt)
 }
 
 android {
