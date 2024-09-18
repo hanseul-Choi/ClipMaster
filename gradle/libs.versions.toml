@@ -1,6 +1,7 @@
 [versions]
 androidGradlePlugin = "8.2.2"
 
+androidxCamerax = "1.1.0-beta01"
 androidxComposeBom = "2024.09.00"
 androidxComposeCompiler = "1.5.2"
 androidxHiltNavigationCompose = "1.2.0"
@@ -37,6 +38,12 @@ androidx-lifecycle-runtimeCompose = { group = "androidx.lifecycle", name = "life
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigation" }
 
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
+
+# camerax
+androidx-camerax-camera2 = { group = "androidx.camera", name = "camera-camera2",version.ref = "androidxCamerax" }
+androidx-camerax-core = { group = "androidx.camera", name = "camera-core", version.ref = "androidxCamerax" }
+androidx-camerax-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "androidxCamerax" }
+androidx-camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = "androidxCamerax" }
 
 coil-kt = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 coil-kt-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
