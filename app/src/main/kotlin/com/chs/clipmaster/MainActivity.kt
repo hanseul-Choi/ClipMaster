@@ -1,5 +1,6 @@
 package com.chs.clipmaster
 
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -22,11 +23,18 @@ class MainActivity : ComponentActivity() {
 
         permissionHelper = PermissionHelper(this)
 
-        val permissions = arrayOf(
-            android.Manifest.permission.CAMERA,
-            android.Manifest.permission.RECORD_AUDIO,
-            android.Manifest.permission.READ_MEDIA_IMAGES,
-        )
+        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+           arrayOf(
+                android.Manifest.permission.CAMERA,
+                android.Manifest.permission.RECORD_AUDIO,
+                android.Manifest.permission.READ_MEDIA_IMAGES,
+            )
+        } else {
+             arrayOf(
+                android.Manifest.permission.CAMERA,
+                android.Manifest.permission.RECORD_AUDIO,
+            )
+        }
 
         permissionHelper.requestPermissions(permissions) { allGranted ->
             if (allGranted) {
