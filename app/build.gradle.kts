@@ -38,6 +38,7 @@ android {
 
 dependencies {
     implementation(project(":core:navigation"))
+    implementation(project(":core:designsystem"))
 
     implementation(project(":feature:camera"))
 

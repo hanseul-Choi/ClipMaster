@@ -15,6 +15,6 @@ fun ClipMasterNavHost(
         navController = navHostController,
         startDestination = "test"
     ) {
-        clipMasterNavigation(composeNavigator = composeNavigator)
+        clipMasterNavigation(composeNavigator = composeNavigator, false)
     }
 }
