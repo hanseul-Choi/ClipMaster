@@ -1,9 +1,11 @@
 package com.chs.clipmaster.core.gallery.service
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
+import androidx.core.content.ContextCompat.startActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,5 +44,13 @@ internal class GalleryServiceImpl @Inject constructor(
             }
             null
         }
+    }
+
+    override fun moveToGallery() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/* video/*")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Context가 Activity가 아닌 경우 추가해야 함
+        }
+        startActivity(context, intent, null)
     }
 }

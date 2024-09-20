@@ -10,4 +10,8 @@ class GalleryRepositoryImpl @Inject constructor(
     override suspend fun getRecentImageUri(): Uri? {
         return galleryService.getRecentImageUri()
     }
+
+    override fun moveToGallery() {
+        galleryService.moveToGallery()
+    }
 }

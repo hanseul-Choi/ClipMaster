@@ -23,7 +23,7 @@ class CameraViewModel @Inject constructor(
         getRecentUri()
     }
 
-    private fun getRecentUri() {
+    internal fun getRecentUri() {
         viewModelScope.launch {
             try {
                 val recentUri = galleryRepository.getRecentImageUri()
@@ -39,6 +39,10 @@ class CameraViewModel @Inject constructor(
                 _cameraUiState.value = CameraUiState.Error("Failed to load recent image: ${e.message}")
             }
         }
+    }
+
+    internal fun moveToGallery() {
+        galleryRepository.moveToGallery()
     }
 }
 
