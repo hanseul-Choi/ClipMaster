@@ -22,7 +22,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 
 @Composable
 fun ClipMasterBottomBar(
@@ -38,24 +41,24 @@ fun ClipMasterBottomBar(
     ) {
 
         if (recentImageUri != null) {
-//            Image(
-//                painter = rememberImagePainter(recentImageUri),
-//                contentDescription = "Gallery Preview",
-//                contentScale = ContentScale.Crop,
-//                modifier = Modifier
-//                    .padding(8.dp)
-//                    .size(48.dp)
-//                    .clickable(onClick = onGalleryClick)
-//                    .background(Color.Gray, shape = RoundedCornerShape(8.dp))
-//            )
+            Image(
+                painter = rememberAsyncImagePainter(recentImageUri),
+                contentDescription = "Gallery Preview",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .size(48.dp)
+                    .clickable(onClick = onGalleryClick)
+                    .background(Color.Gray, shape = RoundedCornerShape(8.dp))
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .size(48.dp)
+                    .background(Color.Gray, shape = RoundedCornerShape(8.dp))
+            )
         }
-
-        Box(
-            modifier = Modifier
-                .padding(8.dp)
-                .size(48.dp)
-                .background(Color.Gray, shape = RoundedCornerShape(8.dp))
-        )
 
         Spacer(modifier = Modifier.weight(1f))
 

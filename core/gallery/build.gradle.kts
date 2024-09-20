@@ -1,17 +1,15 @@
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    alias(libs.plugins.clipmaster.android.library.compose)
+    alias(libs.plugins.clipmaster.android.library)
     alias(libs.plugins.clipmaster.android.hilt)
 }
 
 android {
-    namespace = "com.chs.clipmaster.core.designsystem"
+    namespace = "com.chs.clipmaster.core.gallery"
 }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.coil.kt.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)

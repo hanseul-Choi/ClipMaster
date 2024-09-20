@@ -9,6 +9,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:gallery"))
 
     implementation(libs.androidx.core.ktx)
 
