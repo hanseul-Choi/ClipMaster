@@ -37,7 +37,7 @@ fun CameraBottomBar(
     Row(
         modifier = modifier
             .fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -48,7 +48,7 @@ fun CameraBottomBar(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .padding(8.dp)
-                    .size(48.dp)
+                    .size(64.dp)
                     .clickable(onClick = onGalleryClick)
                     .background(Color.Gray, shape = RoundedCornerShape(8.dp))
             )
@@ -56,7 +56,7 @@ fun CameraBottomBar(
             Box(
                 modifier = Modifier
                     .padding(8.dp)
-                    .size(48.dp)
+                    .size(64.dp)
                     .background(Color.Gray, shape = RoundedCornerShape(8.dp))
             )
         }
@@ -82,7 +82,7 @@ fun CameraBottomBar(
             Icon(
                 imageVector = Icons.Default.Build,
                 contentDescription = "",
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(64.dp),
             )
         }
     }

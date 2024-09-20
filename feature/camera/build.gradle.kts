@@ -9,6 +9,8 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:data"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.camerax.camera2)
     implementation(libs.androidx.camerax.core)

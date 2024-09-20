@@ -24,7 +24,8 @@ class MainActivity : ComponentActivity() {
 
         val permissions = arrayOf(
             android.Manifest.permission.CAMERA,
-            android.Manifest.permission.RECORD_AUDIO
+            android.Manifest.permission.RECORD_AUDIO,
+            android.Manifest.permission.READ_MEDIA_IMAGES,
         )
 
         permissionHelper.requestPermissions(permissions) { allGranted ->
