@@ -15,6 +15,9 @@ dependencies {
     implementation(libs.androidx.camerax.lifecycle)
     implementation(libs.androidx.camerax.view)
 
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.coil.kt.compose)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)

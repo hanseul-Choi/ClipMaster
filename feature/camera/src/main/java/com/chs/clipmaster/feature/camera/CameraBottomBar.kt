@@ -1,13 +1,13 @@
-package com.chs.clipmaster.core.designsystem
+package com.chs.clipmaster.feature.camera
 
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -27,16 +27,18 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 
 @Composable
-fun ClipMasterBottomBar(
-    recentImageUri: Uri?,
-    onGalleryClick: () -> Unit,
-    onCaptureClick: () -> Unit,
-    onFilterClick: () -> Unit,
+fun CameraBottomBar(
+    modifier : Modifier = Modifier,
+    recentImageUri: Uri? = null,
+    onGalleryClick: () -> Unit = {},
+    onCaptureClick: () -> Unit = {},
+    onFilterClick: () -> Unit = {},
 ) {
-    BottomAppBar(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(240.dp)
+    Row(
+        modifier = modifier
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
         if (recentImageUri != null) {
@@ -59,8 +61,6 @@ fun ClipMasterBottomBar(
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -75,8 +75,6 @@ fun ClipMasterBottomBar(
                 modifier = Modifier.size(32.dp)
             )
         }
-
-        Spacer(modifier = Modifier.weight(1f))
 
         IconButton(
             onClick = onFilterClick
