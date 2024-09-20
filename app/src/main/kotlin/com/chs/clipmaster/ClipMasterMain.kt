@@ -1,4 +1,4 @@
-package com.chs.clipmaster.ui
+package com.chs.clipmaster
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
