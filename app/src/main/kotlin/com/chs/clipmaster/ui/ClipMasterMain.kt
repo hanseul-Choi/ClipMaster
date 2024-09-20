@@ -1,10 +1,10 @@
-package chs.clipmaster.ui
+package com.chs.clipmaster.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.rememberNavController
 import com.chs.clipmaster.core.navigation.AppComposeNavigator
-import chs.clipmaster.navigation.ClipMasterNavHost
+import com.chs.clipmaster.navigation.ClipMasterNavHost
 import chs.clipmaster.ui.theme.ClipMasterTheme
 
 @Composable
