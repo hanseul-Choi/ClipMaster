@@ -1,4 +1,4 @@
-package com.chs.clipmaster.permission
+package chs.clipmaster.permission
 
 import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity

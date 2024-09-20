@@ -6,8 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.chs.clipmaster.core.navigation.AppComposeNavigator
-import com.chs.clipmaster.permission.PermissionHelper
-import com.chs.clipmaster.ui.ClipMasterMain
+import chs.clipmaster.permission.PermissionHelper
+import chs.clipmaster.ui.ClipMasterMain
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 

@@ -1,4 +1,4 @@
-package com.chs.clipmaster.navigation
+package chs.clipmaster.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController

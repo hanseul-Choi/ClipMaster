@@ -1,4 +1,4 @@
-package com.chs.clipmaster.ui.theme
+package chs.clipmaster.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
