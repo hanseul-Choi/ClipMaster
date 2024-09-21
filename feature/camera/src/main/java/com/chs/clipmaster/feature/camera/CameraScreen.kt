@@ -51,6 +51,7 @@ fun CameraScreen(
         is CameraUiState.Error -> {
         }
     }
+
     Box(modifier = modifier.fillMaxSize()) {
         CameraPreview(
             modifier = Modifier

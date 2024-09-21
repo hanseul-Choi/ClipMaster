@@ -14,7 +14,7 @@ androidx-test-ext-junit = "1.2.1"
 coil = "2.6.0" # coil 라이브러리는 kotlin friendly한 이미지 라이브러리
 
 espresso-core = "3.6.1"
-
+faceDetector = "16.1.7"
 hilt = "2.48"
 
 jsoup = "1.17.2"
@@ -45,11 +45,14 @@ androidx-camerax-core = { group = "androidx.camera", name = "camera-core", versi
 androidx-camerax-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "androidxCamerax" }
 androidx-camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = "androidxCamerax" }
 
+# coil
 coil-kt = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 coil-kt-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
+# espresso
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 
+# hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name ="hilt-android-compiler", version.ref = "hilt" }
 
@@ -58,6 +61,10 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+
+# mlkit - faceDetector
+mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", version.ref = "faceDetector" }
+
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
 
 
