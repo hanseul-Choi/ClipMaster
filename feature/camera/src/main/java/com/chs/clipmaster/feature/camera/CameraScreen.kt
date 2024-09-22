@@ -4,7 +4,9 @@ import android.content.ContentValues
 import android.content.Context
 import android.media.MediaScannerConnection
 import android.net.Uri
+import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.compose.foundation.layout.Box
@@ -64,7 +66,7 @@ fun CameraScreen(
                 .height(bottomBarHeight)
                 .align(Alignment.BottomCenter),
             recentImageUri = imageUri,
-            onGalleryClick = { viewModel.moveToGallery() },
+            onGalleryClick = { viewModel.moveToGallery(imageUri) },
             onCaptureClick = { takePhoto(context, imageCapture, onImageCaptured) },
         )
     }
@@ -74,11 +76,11 @@ fun CameraScreen(
 private fun takePhoto(
     context: Context,
     imageCapture: ImageCapture,
-    onImageCaptured: (Uri) -> Unit,
+    onImageCaptured: (Uri) -> Unit
 ) {
     // 파일 경로 설정
     val photoFile = File(
-        context.externalMediaDirs.firstOrNull(),
+        context.externalCacheDirs.firstOrNull(), // 캐시 저장소에 저장
         "${System.currentTimeMillis()}.jpg"
     )
 
@@ -91,41 +93,59 @@ private fun takePhoto(
         ContextCompat.getMainExecutor(context),
         object : ImageCapture.OnImageSavedCallback {
             override fun onError(exception: ImageCaptureException) {
-                onError(exception)
+                Log.e("takePhoto", "Error capturing photo", exception)
             }
 
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                 val savedUri = Uri.fromFile(photoFile)
-                onImageCaptured(savedUri) // 이미지가 저장된 후 처리
-                addImageToGallery(context, savedUri)
+                // 이미지가 저장된 후 MediaStore에 추가
+                addImageToGallery(context, savedUri) { updatedUri ->
+                    // MediaScanner가 완료된 후 저장된 이미지 URI 반환
+                    onImageCaptured(updatedUri)
+                }
             }
         }
     )
 }
 
-private fun addImageToGallery(context: Context, imageUri: Uri) {
+private fun addImageToGallery(context: Context, imageUri: Uri, onScanComplete: (Uri) -> Unit) {
     val values = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, "${System.currentTimeMillis()}.jpg")
         put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/MyApp") // 저장할 경로 설정 (API 29 이상)
+        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES) // 저장할 경로 설정 (API 29 이상)
     }
 
-    // MediaStore에 이미지를 삽입
-    context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)?.also { uri ->
-        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+    // MediaStore에 파일 저장
+    val insertedUri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+
+    Log.d("addImageToGallery", "insertedUri is : $insertedUri")
+
+    if (insertedUri != null) {
+        context.contentResolver.openOutputStream(insertedUri)?.use { outputStream ->
             context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
                 inputStream.copyTo(outputStream)
             }
         }
-    }
-}
 
-// 29 미만 사용
-fun addImageToGalleryLegacy(context: Context, photoFile: File) {
-    MediaScannerConnection.scanFile(
-        context,
-        arrayOf(photoFile.absolutePath),
-        arrayOf("image/jpeg"),
-        null
-    )
+        // MediaStore에서 파일의 경로 가져오기
+        val projection = arrayOf(MediaStore.Images.Media.DATA)
+        context.contentResolver.query(insertedUri, projection, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val filePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
+
+                MediaScannerConnection.scanFile(context, arrayOf(filePath), null) { path, uri ->
+                    if (uri != null) {
+                        Log.d("MediaScanner", "Successfully scanned $path: $uri")
+                        onScanComplete(insertedUri) // 스캔 완료 후 URI 반환
+                    } else {
+                        Log.e("MediaScanner", "Failed to scan $path")
+                    }
+                }
+            } else {
+                Log.e("addImageToGallery", "Failed to retrieve file path for scanning")
+            }
+        }
+    } else {
+        Log.e("addImageToGallery", "Failed to insert image into MediaStore")
+    }
 }

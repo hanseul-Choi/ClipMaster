@@ -41,8 +41,8 @@ class CameraViewModel @Inject constructor(
         }
     }
 
-    internal fun moveToGallery() {
-        galleryRepository.moveToGallery()
+    internal fun moveToGallery(recentUri: Uri?) {
+        galleryRepository.moveToGallery(recentUri)
     }
 }
 

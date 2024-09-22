@@ -5,5 +5,5 @@ import android.net.Uri
 interface GalleryService {
     suspend fun getRecentImageUri(): Uri?
 
-    fun moveToGallery()
+    fun moveToGallery(recentUri: Uri?)
 }

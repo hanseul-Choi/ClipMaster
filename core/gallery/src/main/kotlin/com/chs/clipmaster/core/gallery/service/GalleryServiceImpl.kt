@@ -27,7 +27,6 @@ internal class GalleryServiceImpl @Inject constructor(
                 sortOrder
             )?.use { cursor ->
                 if (cursor.count == 0) {
-                    // 디버깅: 쿼리 결과가 없는 경우
                     Log.e("GalleryRepository", "No images found in MediaStore.")
                 } else {
                     Log.d("GalleryRepository", "Found ${cursor.count} images in MediaStore.")
@@ -46,11 +45,19 @@ internal class GalleryServiceImpl @Inject constructor(
         }
     }
 
-    override fun moveToGallery() {
+    override fun moveToGallery(recentUri: Uri?) {
         val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/* video/*")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Context가 Activity가 아닌 경우 추가해야 함
+            setDataAndType(recentUri, "image/*")
+            putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        startActivity(context, intent, null)
+
+        // 인텐트를 처리할 수 있는 앱이 있는지 확인
+        try {
+            startActivity(context, intent, null)
+        } catch (e: Exception) {
+            Log.e("openPicturesInGallery", "Error opening gallery: ${e.localizedMessage}")
+        }
     }
 }

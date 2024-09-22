@@ -11,7 +11,7 @@ class GalleryRepositoryImpl @Inject constructor(
         return galleryService.getRecentImageUri()
     }
 
-    override fun moveToGallery() {
-        galleryService.moveToGallery()
+    override fun moveToGallery(recentUri: Uri?) {
+        galleryService.moveToGallery(recentUri)
     }
 }
