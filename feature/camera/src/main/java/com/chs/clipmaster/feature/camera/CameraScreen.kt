@@ -2,15 +2,17 @@ package com.chs.clipmaster.feature.camera
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.graphics.Paint
 import android.graphics.RectF
+import android.media.ExifInterface
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,11 +28,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.chs.clipmaster.core.facedetector.OverlayManager
-import java.io.File
 import com.chs.clipmaster.core.facedetector.R.drawable as faceR
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.view.PreviewView
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.content.ContextCompat
+import java.io.File
+
 
 @Composable
 fun CameraScreen(
@@ -39,7 +46,9 @@ fun CameraScreen(
 ) {
     val context = LocalContext.current
 
-    // 얼굴 좌표 관리
+    // ImageCapture 객체 생성
+    val imageCapture = remember { ImageCapture.Builder().build() }
+
     var faceBoundingBoxes by remember { mutableStateOf<List<RectF>>(emptyList()) }
 
     // 머리띠 이미지를 Bitmap으로 변환하여 OverlayManager에 전달
@@ -50,15 +59,9 @@ fun CameraScreen(
 
     val uiState by viewModel.cameraUiState.collectAsState()
 
-    val onImageCaptured: (Uri) -> Unit = { uri ->
-        viewModel.getRecentUri()
-    }
-
-    val bottomBarHeight = 180.dp
+    val bottomBarHeight = 180.dp // BottomBar 크기 설정
     var imageUri: Uri? = null
-
-    // ImageCapture를 remember로 관리
-    val imageCapture = remember { ImageCapture.Builder().build() }
+    var previewView by remember { mutableStateOf<PreviewView?>(null) } // PreviewView를 상태로 관리
 
     when (uiState) {
         is CameraUiState.Idle -> { }
@@ -75,11 +78,13 @@ fun CameraScreen(
         CameraPreview(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = bottomBarHeight),
+                .padding(bottom = bottomBarHeight), // BottomBar 여백 추가
+            imageCapture = imageCapture, // ImageCapture 전달
             faceDetectionManager = viewModel.faceDetectionManager,
             onFacesDetected = { faces ->
                 faceBoundingBoxes = faces
-            }
+            },
+            onPreviewViewCreated = { view -> previewView = view } // PreviewView 참조 저장
         )
 
         // 얼굴에 맞춰 오버레이 그리기
@@ -87,53 +92,144 @@ fun CameraScreen(
             viewModel.overlayManager.drawOverlay(this, faceBoundingBoxes)
         }
 
+        // BottomBar 크기 설정 및 UI 추가
         CameraBottomBar(
             modifier = Modifier
-                .height(bottomBarHeight)
+                .height(bottomBarHeight) // BottomBar 크기 복원
                 .align(Alignment.BottomCenter),
             recentImageUri = imageUri,
             onGalleryClick = { viewModel.moveToGallery(imageUri) },
-            onCaptureClick = { takePhoto(context, imageCapture, onImageCaptured) }
+            onCaptureClick = {
+                // previewView가 null이 아닐 때만 캡처 실행
+                previewView?.let { view ->
+                    captureCombinedImage(
+                        context,
+                        imageCapture,
+                        headbandBitmap,
+                        faceBoundingBoxes,
+                        view // PreviewView 전달
+                    ) { uri ->
+                        viewModel.getRecentUri() // 이미지 저장 완료 후 갤러리 URI 업데이트
+                    }
+                } ?: Log.e("CameraScreen", "PreviewView is null, cannot capture image")
+            }
         )
     }
 }
 
-private fun takePhoto(
+private fun captureCombinedImage(
     context: Context,
     imageCapture: ImageCapture,
-    onImageCaptured: (Uri) -> Unit
+    headbandBitmap: Bitmap,
+    faceBoundingBoxes: List<RectF>,
+    previewView: PreviewView, // 프리뷰 뷰 추가
+    onImageCaptured: (Uri?) -> Unit
 ) {
-    // 파일 경로 설정
+    // 사진 파일 경로 설정
     val photoFile = File(
-        context.externalCacheDirs.firstOrNull(), // 캐시 저장소에 저장
+        context.externalCacheDirs.firstOrNull(),
         "${System.currentTimeMillis()}.jpg"
     )
 
-    // Output 옵션 설정
     val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-    // 사진 캡처
     imageCapture.takePicture(
         outputOptions,
         ContextCompat.getMainExecutor(context),
         object : ImageCapture.OnImageSavedCallback {
             override fun onError(exception: ImageCaptureException) {
-                Log.e("takePhoto", "Error capturing photo", exception)
+                Log.e("captureCombinedImage", "Photo capture failed: ${exception.message}", exception)
+                onImageCaptured(null) // 오류 발생 시 null을 반환
             }
 
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                val savedUri = Uri.fromFile(photoFile)
-                // 이미지가 저장된 후 MediaStore에 추가
-                addImageToGallery(context, savedUri) { updatedUri ->
-                    // MediaScanner가 완료된 후 저장된 이미지 URI 반환
-                    onImageCaptured(updatedUri)
+                val capturedBitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+
+                // 이미지의 회전 정보를 가져오기
+                val rotatedBitmap = rotateBitmapIfNeeded(photoFile, capturedBitmap)
+
+                // 캡처된 이미지와 오버레이 결합
+                val combinedBitmap = combineCapturedImageWithOverlay(rotatedBitmap, headbandBitmap, faceBoundingBoxes, previewView)
+
+                // 결합된 이미지를 MediaStore에 저장
+                saveBitmapToGallery(context, combinedBitmap) { uri ->
+                    if (uri != null) {
+                        Log.d("captureCombinedImage", "Image saved successfully: $uri")
+                        onImageCaptured(uri) // 성공적으로 저장된 이미지의 URI를 반환
+                    } else {
+                        Log.e("captureCombinedImage", "Failed to save image")
+                        onImageCaptured(null)
+                    }
                 }
             }
         }
     )
 }
 
-private fun addImageToGallery(context: Context, imageUri: Uri, onScanComplete: (Uri) -> Unit) {
+private fun combineCapturedImageWithOverlay(
+    capturedBitmap: Bitmap,
+    overlayBitmap: Bitmap,
+    faceBoundingBoxes: List<RectF>,
+    previewView: PreviewView // 프리뷰 뷰 추가하여 좌표 변환에 사용
+): Bitmap {
+    // 캡처된 이미지와 동일한 크기의 빈 비트맵 생성
+    val combinedBitmap = Bitmap.createBitmap(capturedBitmap.width, capturedBitmap.height, capturedBitmap.config)
+    val canvas = android.graphics.Canvas(combinedBitmap)
+
+    // 캡처된 이미지를 먼저 그리기
+    canvas.drawBitmap(capturedBitmap, 0f, 0f, null)
+
+    // 프리뷰 크기와 이미지 크기 가져오기
+    val previewWidth = previewView.width.toFloat()
+    val previewHeight = previewView.height.toFloat()
+    val imageWidth = capturedBitmap.width.toFloat()
+    val imageHeight = capturedBitmap.height.toFloat()
+
+    // 얼굴 좌표를 이미지 크기에 맞춰 변환 및 오버레이 그리기
+    faceBoundingBoxes.forEach { rect ->
+        // 프리뷰에서 이미지로 좌표를 변환
+        val scaledRect = mapRectFromPreviewToImage(rect, previewWidth, previewHeight, imageWidth, imageHeight)
+
+        // 머리띠가 얼굴의 중앙에 위치하도록 조정 (가로 방향)
+        val headbandX = scaledRect.centerX() - (overlayBitmap.width / 2f)
+        // 머리띠가 얼굴의 위쪽에 위치하도록 조정 (세로 방향)
+        val headbandY = scaledRect.top - (overlayBitmap.height / 2f)
+
+        // 머리띠를 캡처된 이미지 위에 그리기
+        canvas.drawBitmap(overlayBitmap, headbandX, headbandY, null)
+    }
+
+    return combinedBitmap
+}
+
+
+private fun mapRectFromPreviewToImage(
+    rect: RectF,
+    previewWidth: Float,
+    previewHeight: Float,
+    imageWidth: Float,
+    imageHeight: Float
+): RectF {
+    // 이미지의 크기가 프리뷰의 크기와 비율이 다를 수 있으므로, 중앙 정렬 기준으로 비율을 맞춥니다.
+    val widthRatio = imageWidth / previewWidth
+    val heightRatio = imageHeight / previewHeight
+
+    // 이미지와 프리뷰 사이의 좌표 오프셋을 계산 (중앙 정렬을 고려)
+//    val offsetX = (imageWidth - (previewWidth * widthRatio)) / 2f
+//    val offsetY = (imageHeight - (previewHeight * heightRatio)) / 2f
+
+    // 변환된 좌표 반환 (좌표에 오프셋 적용)
+    return RectF(
+        rect.left * widthRatio,
+        rect.top * heightRatio,
+        rect.right * widthRatio + 200f,
+        rect.bottom * heightRatio
+    )
+}
+
+
+// 결합된 이미지를 MediaStore에 저장하는 함수
+private fun saveBitmapToGallery(context: Context, bitmap: Bitmap, onScanComplete: (Uri?) -> Unit) {
     val values = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, "${System.currentTimeMillis()}.jpg")
         put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
@@ -141,36 +237,52 @@ private fun addImageToGallery(context: Context, imageUri: Uri, onScanComplete: (
     }
 
     // MediaStore에 파일 저장
-    val insertedUri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-
-    Log.d("addImageToGallery", "insertedUri is : $insertedUri")
-
-    if (insertedUri != null) {
-        context.contentResolver.openOutputStream(insertedUri)?.use { outputStream ->
-            context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
-                inputStream.copyTo(outputStream)
-            }
+    val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+    if (uri != null) {
+        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         }
 
-        // MediaStore에서 파일의 경로 가져오기
+        // 실제 파일 경로 가져오기
         val projection = arrayOf(MediaStore.Images.Media.DATA)
-        context.contentResolver.query(insertedUri, projection, null, null, null)?.use { cursor ->
+        context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
             if (cursor.moveToFirst()) {
                 val filePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
 
-                MediaScannerConnection.scanFile(context, arrayOf(filePath), null) { path, uri ->
-                    if (uri != null) {
-                        Log.d("MediaScanner", "Successfully scanned $path: $uri")
-                        onScanComplete(insertedUri) // 스캔 완료 후 URI 반환
+                // MediaScanner를 파일 경로 기반으로 실행
+                MediaScannerConnection.scanFile(context, arrayOf(filePath), null) { path, scannedUri ->
+                    if (scannedUri != null) {
+                        Log.d("MediaScanner", "Successfully scanned $path: $scannedUri")
+                        onScanComplete(scannedUri) // 스캔 완료 후 URI 반환
                     } else {
                         Log.e("MediaScanner", "Failed to scan $path")
+                        onScanComplete(null)
                     }
                 }
             } else {
-                Log.e("addImageToGallery", "Failed to retrieve file path for scanning")
+                Log.e("saveBitmapToGallery", "Failed to retrieve file path for scanning")
+                onScanComplete(null)
             }
         }
     } else {
-        Log.e("addImageToGallery", "Failed to insert image into MediaStore")
+        Log.e("saveBitmapToGallery", "Failed to insert image into MediaStore")
+        onScanComplete(null) // URI가 null인 경우에도 안전하게 처리
+    }
+}
+
+private fun rotateBitmapIfNeeded(photoFile: File, bitmap: Bitmap): Bitmap {
+    val exif = ExifInterface(photoFile.absolutePath)
+    val rotationDegrees = when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+        ExifInterface.ORIENTATION_ROTATE_90 -> 90
+        ExifInterface.ORIENTATION_ROTATE_180 -> 180
+        ExifInterface.ORIENTATION_ROTATE_270 -> 270
+        else -> 0
+    }
+
+    return if (rotationDegrees != 0) {
+        val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+        Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    } else {
+        bitmap
     }
 }

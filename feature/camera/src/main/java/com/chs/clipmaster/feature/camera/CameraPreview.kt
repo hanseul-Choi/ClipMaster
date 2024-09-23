@@ -4,6 +4,7 @@ import android.graphics.RectF
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -18,8 +19,10 @@ import com.chs.clipmaster.core.facedetector.BaseFaceDetectionManager
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
+    imageCapture: ImageCapture, // ImageCapture 전달
     faceDetectionManager: BaseFaceDetectionManager, // 얼굴 감지 매니저
-    onFacesDetected: (List<RectF>) -> Unit // 얼굴 좌표 전달 콜백
+    onFacesDetected: (List<RectF>) -> Unit, // 얼굴 좌표 전달 콜백
+    onPreviewViewCreated: (PreviewView) -> Unit // PreviewView 생성 후 전달
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -70,12 +73,16 @@ fun CameraPreview(
                         lifecycleOwner,
                         cameraSelector,
                         preview,
-                        imageAnalyzer
+                        imageAnalyzer,
+                        imageCapture // ImageCapture 추가
                     )
                 } catch (e: Exception) {
                     Log.e("CameraPreview", "Failed to bind camera use cases", e)
                 }
             }, ContextCompat.getMainExecutor(ctx))
+
+            // PreviewView가 생성된 후 외부로 전달
+            onPreviewViewCreated(previewView)
 
             previewView
         },

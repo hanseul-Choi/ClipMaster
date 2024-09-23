@@ -23,6 +23,7 @@ dependencies {
 
     implementation(libs.androidx.compose.material3)
     implementation(libs.coil.kt.compose)
+    implementation(libs.ui.graphics.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)

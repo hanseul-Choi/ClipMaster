@@ -14,11 +14,6 @@ class OverlayManager @Inject constructor() : BaseOverlayManager {
     private lateinit var headbandBitmap: Bitmap // 머리띠 이미지 비트맵
     private val paint = Paint()
 
-    private val paint2 = Paint().apply {
-        color = Color.RED // 빨간색 설정
-        style = Paint.Style.FILL // 점을 채우기 위해 FILL 스타일 사용
-    }
-
     fun setHeadbandBitmap(bitmap: Bitmap) {
         headbandBitmap = bitmap
     }
@@ -43,14 +38,6 @@ class OverlayManager @Inject constructor() : BaseOverlayManager {
 
                 // Bitmap(머리띠) 그리기
                 canvas.nativeCanvas.drawBitmap(headbandBitmap, null, destRect, paint)
-
-
-                // 얼굴의 중심 좌표 계산
-                val centerX = rect.centerX()
-                val centerY = rect.centerY()
-
-                // 원(점) 그리기 (반지름을 크게 설정)
-                canvas.nativeCanvas.drawCircle(centerX, centerY, 20f, paint2) // 20f는 점의 반지름
             }
         }
     }
