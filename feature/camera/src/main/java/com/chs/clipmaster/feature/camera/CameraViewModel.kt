@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chs.clipmaster.core.data.repository.GalleryRepository
+import com.chs.clipmaster.core.facedetector.FaceDetectionManager
+import com.chs.clipmaster.core.facedetector.OverlayManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +15,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CameraViewModel @Inject constructor(
-    private val galleryRepository: GalleryRepository
+    private val galleryRepository: GalleryRepository,
+    val faceDetectionManager: FaceDetectionManager,
+    val overlayManager: OverlayManager,
 ): ViewModel() {
 
     private val _cameraUiState: MutableStateFlow<CameraUiState> = MutableStateFlow(CameraUiState.Idle)

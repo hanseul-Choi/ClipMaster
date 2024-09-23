@@ -2,6 +2,8 @@ package com.chs.clipmaster.feature.camera
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.BitmapFactory
+import android.graphics.RectF
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Environment
@@ -9,6 +11,7 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -16,21 +19,36 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.chs.clipmaster.core.facedetector.OverlayManager
 import java.io.File
+import com.chs.clipmaster.core.facedetector.R.drawable as faceR
 
 @Composable
 fun CameraScreen(
     modifier: Modifier = Modifier,
     viewModel: CameraViewModel = hiltViewModel(),
+
 ) {
     val context = LocalContext.current
+
+    // 얼굴 좌표 관리
+    var faceBoundingBoxes by remember { mutableStateOf<List<RectF>>(emptyList()) }
+
+    // 머리띠 이미지를 Bitmap으로 변환하여 OverlayManager에 전달
+    val headbandBitmap = remember {
+        BitmapFactory.decodeResource(context.resources, faceR.hairband1)
+    }
+
+    viewModel.overlayManager.setHeadbandBitmap(headbandBitmap)
 
     val uiState by viewModel.cameraUiState.collectAsState()
 
@@ -45,33 +63,42 @@ fun CameraScreen(
     val imageCapture = remember { ImageCapture.Builder().build() }
 
     when (uiState) {
-        is CameraUiState.Idle -> {
-        }
+        is CameraUiState.Idle -> { }
         is CameraUiState.RecentImageSuccess -> {
             imageUri = (uiState as CameraUiState.RecentImageSuccess).uri
         }
         is CameraUiState.Error -> {
+            Log.e("CameraScreen", "Error: ${(uiState as CameraUiState.Error).message}")
         }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
+        // 카메라 프리뷰와 얼굴 좌표 업데이트
         CameraPreview(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = bottomBarHeight),
-            imageCapture = imageCapture,
+            faceDetectionManager = viewModel.faceDetectionManager,
+            onFacesDetected = { faces ->
+                faceBoundingBoxes = faces
+            }
         )
+
+        // 얼굴에 맞춰 오버레이 그리기
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            viewModel.overlayManager.drawOverlay(this, faceBoundingBoxes)
+        }
+
         CameraBottomBar(
             modifier = Modifier
                 .height(bottomBarHeight)
                 .align(Alignment.BottomCenter),
             recentImageUri = imageUri,
             onGalleryClick = { viewModel.moveToGallery(imageUri) },
-            onCaptureClick = { takePhoto(context, imageCapture, onImageCaptured) },
+            onCaptureClick = { takePhoto(context, imageCapture, onImageCaptured) }
         )
     }
 }
-
 
 private fun takePhoto(
     context: Context,

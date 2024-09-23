@@ -1,8 +1,9 @@
 package com.chs.clipmaster.feature.camera
 
-import android.content.Context
+import android.graphics.RectF
+import android.util.Log
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -11,17 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import com.chs.clipmaster.core.facedetector.BaseFaceDetectionManager
 
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
-    imageCapture: ImageCapture // 외부에서 ImageCapture를 전달받음
+    faceDetectionManager: BaseFaceDetectionManager, // 얼굴 감지 매니저
+    onFacesDetected: (List<RectF>) -> Unit // 얼굴 좌표 전달 콜백
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -29,57 +26,57 @@ fun CameraPreview(
         factory = { ctx ->
             val previewView = PreviewView(ctx)
 
-            // 코루틴을 사용해 CameraProvider를 가져옴
-            lifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-                try {
-                    // 코루틴 기반으로 CameraProvider 가져오기
-                    val cameraProvider = getInstanceSuspend(ctx)
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+            cameraProviderFuture.addListener({
+                val cameraProvider = cameraProviderFuture.get()
 
-                    // Preview 설정
-                    val preview = Preview.Builder().build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
+                // Preview 설정
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+
+                // ImageAnalysis 설정 (얼굴 인식용)
+                val imageAnalyzer = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also {
+                        it.setAnalyzer(ContextCompat.getMainExecutor(ctx)) { imageProxy ->
+                            val image = imageProxy.image
+                            if (image != null) {
+                                // 얼굴 감지 로직 호출
+                                faceDetectionManager.detectFace(image, { faces ->
+                                    // 얼굴 감지 후 좌표로 변환
+                                    val faceRects = faces.map { face -> RectF(face.boundingBox) }
+                                    onFacesDetected(faceRects) // 좌표 전달
+                                }) {
+                                    // 이미지 리소스 해제
+                                    imageProxy.close()
+                                }
+                            } else {
+                                imageProxy.close() // image가 null인 경우에도 반드시 close 호출
+                            }
+                        }
                     }
 
-                    // Camera Selector (전면 카메라 선택)
-                    val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
-                    // 기존 바인딩 해제
+
+                val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+
+                try {
                     cameraProvider.unbindAll()
-
-                    // Lifecycle과 연결
                     cameraProvider.bindToLifecycle(
                         lifecycleOwner,
                         cameraSelector,
                         preview,
-                        imageCapture // ImageCapture 추가
+                        imageAnalyzer
                     )
                 } catch (e: Exception) {
-                    // 에러 처리 필요
+                    Log.e("CameraPreview", "Failed to bind camera use cases", e)
                 }
-            }
+            }, ContextCompat.getMainExecutor(ctx))
 
             previewView
         },
         modifier = modifier
     )
-}
-
-suspend fun getInstanceSuspend(context: Context): ProcessCameraProvider {
-    return suspendCancellableCoroutine { cont ->
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-
-        cameraProviderFuture.addListener({
-            try {
-                val cameraProvider = cameraProviderFuture.get()
-                cont.resume(cameraProvider) // 성공 시 resume
-            } catch (e: Exception) {
-                cont.resumeWithException(e) // 실패 시 예외 전달
-            }
-        }, ContextCompat.getMainExecutor(context)) // 메인 스레드에서 실행되도록 설정
-
-        // 코루틴이 취소되면 Future도 취소
-        cont.invokeOnCancellation {
-            cameraProviderFuture.cancel(true)
-        }
-    }
 }

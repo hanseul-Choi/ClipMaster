@@ -11,6 +11,11 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.mlkit.face.detection)
+    implementation(libs.androidx.ui.graphics.android)
+    implementation(libs.androidx.ui.android)
+    implementation(libs.ui.android)
+    implementation(libs.ui.android)
+    implementation(libs.ui.graphics.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
