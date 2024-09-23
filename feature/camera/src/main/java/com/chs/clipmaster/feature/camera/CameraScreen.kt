@@ -36,7 +36,6 @@ import com.chs.clipmaster.core.facedetector.R.drawable as faceR
 fun CameraScreen(
     modifier: Modifier = Modifier,
     viewModel: CameraViewModel = hiltViewModel(),
-
 ) {
     val context = LocalContext.current
 
@@ -47,7 +46,6 @@ fun CameraScreen(
     val headbandBitmap = remember {
         BitmapFactory.decodeResource(context.resources, faceR.hairband1)
     }
-
     viewModel.overlayManager.setHeadbandBitmap(headbandBitmap)
 
     val uiState by viewModel.cameraUiState.collectAsState()

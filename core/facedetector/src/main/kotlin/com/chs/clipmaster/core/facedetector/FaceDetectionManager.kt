@@ -11,7 +11,8 @@ import javax.inject.Inject
 class FaceDetectionManager @Inject constructor(
 ): BaseFaceDetectionManager {
     private val options = FaceDetectorOptions.Builder()
-        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE) // 실시간 감지 시 PERFORMANCE_MODE_FAST 사용
+        .setMinFaceSize(0.15f)
         .build()
 
     private val detector = FaceDetection.getClient(options)

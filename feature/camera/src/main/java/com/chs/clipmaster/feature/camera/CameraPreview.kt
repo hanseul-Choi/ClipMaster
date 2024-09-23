@@ -4,6 +4,7 @@ import android.graphics.RectF
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -45,8 +46,11 @@ fun CameraPreview(
                             if (image != null) {
                                 // 얼굴 감지 로직 호출
                                 faceDetectionManager.detectFace(image, { faces ->
-                                    // 얼굴 감지 후 좌표로 변환
-                                    val faceRects = faces.map { face -> RectF(face.boundingBox) }
+                                    // 얼굴 감지 후 좌표 변환
+                                    val faceRects = faces.map { face ->
+                                        // 얼굴 좌표를 프리뷰 좌표로 변환
+                                        mapRectToPreview(RectF(face.boundingBox), imageProxy, previewView)
+                                    }
                                     onFacesDetected(faceRects) // 좌표 전달
                                 }) {
                                     // 이미지 리소스 해제
@@ -57,8 +61,6 @@ fun CameraPreview(
                             }
                         }
                     }
-
-
 
                 val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
@@ -78,5 +80,27 @@ fun CameraPreview(
             previewView
         },
         modifier = modifier
+    )
+}
+
+fun mapRectToPreview(rect: RectF, imageProxy: ImageProxy, previewView: PreviewView): RectF {
+    // 프리뷰 화면의 크기 가져오기
+    val previewWidth = previewView.width.toFloat()
+    val previewHeight = previewView.height.toFloat()
+
+    // 이미지 크기
+    val imageWidth = imageProxy.width.toFloat()
+    val imageHeight = imageProxy.height.toFloat()
+
+    // 좌표 변환 비율 계산
+    val widthRatio = previewWidth / imageWidth
+    val heightRatio = previewHeight / imageHeight
+
+    // 얼굴 좌표를 프리뷰 화면 좌표로 변환
+    return RectF(
+        rect.left * widthRatio,
+        rect.top * heightRatio,
+        rect.right * widthRatio,
+        rect.bottom * heightRatio
     )
 }
