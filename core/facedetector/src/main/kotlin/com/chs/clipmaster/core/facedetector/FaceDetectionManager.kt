@@ -1,5 +1,6 @@
 package com.chs.clipmaster.core.facedetector
 
+import android.graphics.RectF
 import android.media.Image
 import android.util.Log
 import com.google.mlkit.vision.common.InputImage
@@ -19,14 +20,16 @@ class FaceDetectionManager @Inject constructor(
 
     override fun detectFace(
         image: Image,
-        onFacesDetected: (List<Face>) -> Unit,
+        onFacesDetected: (List<RectF>) -> Unit,
         onComplete: () -> Unit
     ) {
         val inputImage = InputImage.fromMediaImage(image, 0)
 
         detector.process(inputImage)
             .addOnSuccessListener { faces ->
-                onFacesDetected(faces) // 얼굴 감지 결과를 콜백으로 전달
+                onFacesDetected(faces.map { face ->
+                    RectF(face.boundingBox)
+                })
             }
             .addOnFailureListener { e ->
                 Log.e("FaceDetectionManager", "Face detection failed", e)

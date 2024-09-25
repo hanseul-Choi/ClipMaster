@@ -12,9 +12,6 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:facedetector"))
 
-    // Todo: 추후 제거 필요
-    implementation(libs.mlkit.face.detection)
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.camerax.camera2)
     implementation(libs.androidx.camerax.core)

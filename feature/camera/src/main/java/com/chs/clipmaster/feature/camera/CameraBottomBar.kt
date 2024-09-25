@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -86,11 +85,4 @@ fun CameraBottomBar(
             )
         }
     }
-}
-
-@Composable
-fun FilterSelectedBar() {
-    BottomAppBar(
-        containerColor = Color.Blue
-    ) {  }
 }

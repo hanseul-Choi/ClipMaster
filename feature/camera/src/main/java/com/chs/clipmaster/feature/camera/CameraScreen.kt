@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.graphics.Paint
 import android.graphics.RectF
 import android.media.ExifInterface
 import android.media.MediaScannerConnection
@@ -33,11 +32,8 @@ import com.chs.clipmaster.core.facedetector.R.drawable as faceR
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.view.PreviewView
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import java.io.File
-
 
 @Composable
 fun CameraScreen(
