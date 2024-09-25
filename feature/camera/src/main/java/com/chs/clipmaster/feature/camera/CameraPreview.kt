@@ -2,7 +2,9 @@ package com.chs.clipmaster.feature.camera
 
 import android.graphics.RectF
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageProxy
@@ -16,13 +18,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.chs.clipmaster.core.facedetector.BaseFaceDetectionManager
 
+@OptIn(ExperimentalGetImage::class)
 @Composable
 fun CameraPreview(
     modifier: Modifier = Modifier,
-    imageCapture: ImageCapture, // ImageCapture 전달
-    faceDetectionManager: BaseFaceDetectionManager, // 얼굴 감지 매니저
-    onFacesDetected: (List<RectF>) -> Unit, // 얼굴 좌표 전달 콜백
-    onPreviewViewCreated: (PreviewView) -> Unit // PreviewView 생성 후 전달
+    imageCapture: ImageCapture,
+    faceDetectionManager: BaseFaceDetectionManager,
+    onFacesDetected: (List<RectF>) -> Unit,
+    onPreviewViewCreated: (PreviewView) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -41,7 +44,7 @@ fun CameraPreview(
 
                 // ImageAnalysis 설정 (얼굴 인식용)
                 val imageAnalyzer = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST) // 이미지 비차단 모드
                     .build()
                     .also {
                         it.setAnalyzer(ContextCompat.getMainExecutor(ctx)) { imageProxy ->
@@ -49,18 +52,16 @@ fun CameraPreview(
                             if (image != null) {
                                 // 얼굴 감지 로직 호출
                                 faceDetectionManager.detectFace(image, { faces ->
-                                    // 얼굴 감지 후 좌표 변환
-                                    val faceRects = faces.map { face ->
-                                        // 얼굴 좌표를 프리뷰 좌표로 변환
-                                        mapRectToPreview(RectF(face.boundingBox), imageProxy, previewView)
+                                    val faceRects = faces.map { rectFace ->
+                                        // 얼굴 좌표를 preview 좌표에 맞게 변환
+                                        mapRectToPreview(rectFace, imageProxy, previewView)
                                     }
                                     onFacesDetected(faceRects) // 좌표 전달
                                 }) {
-                                    // 이미지 리소스 해제
                                     imageProxy.close()
                                 }
                             } else {
-                                imageProxy.close() // image가 null인 경우에도 반드시 close 호출
+                                imageProxy.close()
                             }
                         }
                     }
@@ -74,7 +75,7 @@ fun CameraPreview(
                         cameraSelector,
                         preview,
                         imageAnalyzer,
-                        imageCapture // ImageCapture 추가
+                        imageCapture
                     )
                 } catch (e: Exception) {
                     Log.e("CameraPreview", "Failed to bind camera use cases", e)
